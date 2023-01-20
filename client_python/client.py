@@ -20,10 +20,9 @@ def upload(client, filePath: str):
             
             # envia metadados do arquivo no formato (<filename>|<filesize>)
             fileInfo = f'{fileName}|{fileSize}'
-            print(fileInfo)
             client.sendall(fileInfo.encode(FORMAT)) 
             client.sendall(fileContent) # envia o conteúdo do arquivo
-            
+		
             print(f'{fileName} enviado!')
         return
     except:

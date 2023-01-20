@@ -62,6 +62,7 @@ def handleClient(conection, address):
 def upload(conection): 
     # fileInfo = [<filename>, <filesize>]
     fileInfo = conection.recv(BUFFER_SIZE).decode(FORMAT).split('|') # recebe metadados do upload
+    print(f'[METADATA] Informações: {fileInfo}')
     
     fileName = fileInfo[0]
     fileSize = int(fileInfo[1])

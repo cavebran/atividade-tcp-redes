@@ -1,5 +1,11 @@
-client/files/*
-!cliente/files/.gitkeep
+client_python/files/*
+!client_python/files/.gitkeep
+
+client_js/files/*
+!client_js/files/.gitkeep
+client_js/node_modules
+client_js/package-lock.json
 
 server/files/*
-!servidor/files/.gitkeep
+!server/files/.gitkeep
+
