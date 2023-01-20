@@ -1,16 +1,18 @@
 import os
 import pickle
 import socket
-from _thread import *
+import threading
 
 PORT = 9000
 HOST = 'localhost'
 BUFFER_SIZE = 1024
 INT_SIZE = 4
 DIRECTORY = 'files'
+FORMAT = 'utf-8'
 
 def startServer(host, port):
     # inicialização do servidor
+    print("[STARTING] Servidor está inicializando...")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     try:
@@ -19,44 +21,47 @@ def startServer(host, port):
         print(str(e))
         
     server.listen(5)
-    print('Servidor Iniciado')
+    print(f"[LISTENING] Servidor está escutando em {host}:{port}\n")
     
-    try:
-        while True:
-            conection, clientAddress = server.accept() # estabelece conexão com o cliente
-            # https://www.positronx.io/create-socket-server-with-multiple-clients-in-python/
-            start_new_thread(multiThreadClient, (conection, clientAddress)) # inicia um novo thread para cada conexão
-        conection.close()
-    except KeyboardInterrupt:
-        exit()
+    while True:
+        try:
+            conection, address = server.accept() # estabelece conexão com o cliente
+            thread = threading.Thread(target=handleClient, args=(conection, address))
+            thread.start()
+            print(f"[ACTIVE CONNECTIONS] Conexões: {threading.active_count() - 1}")
+        except KeyboardInterrupt:
+            exit()
 
-def multiThreadClient(conection, clientAddress):
-    print(f'Conectado a {clientAddress}\n')
+def handleClient(conection, address):
+    print(f"[NEW CONNECTION] {address} conectado.")
     
-    try:
-        while True:
-                cmd = conection.recv(BUFFER_SIZE) # recebe a instrução
-                
-                if(cmd):
-                    cmd = cmd.decode('utf-8')
-                    
-                    match cmd:
-                        case 'upload':
-                            upload(conection)
-                        case 'list':
-                            list(conection)
-                        case 'download':
-                            download(conection)
-                        case _:
-                            print('Comando não reconhecido')
-                else:
-                    break
-    except KeyboardInterrupt:
-        exit()
-
+    conected = True
+    while conected:
+        cmd = conection.recv(BUFFER_SIZE) # recebe a instrução
+        
+        if(cmd):
+            cmd = cmd.decode(FORMAT)
+            
+            match cmd:
+                case 'upload':
+                    upload(conection)
+                case 'list':
+                    list(conection)
+                case 'download':
+                    download(conection)
+                case 'close':
+                    conected = False
+                case _:
+                    print(f'[ERROR] Comando \'{cmd}\' não reconhecido.')
+        else:
+            break
+    
+    conection.close()
+    print(f"[CLOSED CONNECTION] {address} desconectado.")
+    
 def upload(conection): 
     # fileInfo = [<filename>, <filesize>]
-    fileInfo = conection.recv(BUFFER_SIZE).decode('utf-8').split('|') # recebe metadados do upload
+    fileInfo = conection.recv(BUFFER_SIZE).decode(FORMAT).split('|') # recebe metadados do upload
     
     fileName = fileInfo[0]
     fileSize = int(fileInfo[1])
@@ -73,7 +78,7 @@ def upload(conection):
     with open(f'{DIRECTORY}\\{fileName}', 'wb') as file: # grava o arquivo no servidor
         file.write(fileContent)
 
-    print('Arquivo salvo')
+    print(f'[SUCCESS] Arquivo \'{fileName}\' salvo.')
 
 def list(conection):
     fileList = pickle.dumps(os.listdir(DIRECTORY)) # obtem a lista de arquivos do servidor
@@ -84,13 +89,11 @@ def list(conection):
     
     return
 
-def download(conection, fileName):    
-    fileName = conection.recv(BUFFER_SIZE).decode('utf-8') # recebe o nome do arquivo
+def download(conection):    
+    fileName = conection.recv(BUFFER_SIZE).decode(FORMAT) # recebe o nome do arquivo
     
     for file in os.listdir(DIRECTORY): # procura o arquivo
         if fileName == file:
-            print(f'<{file}>')
-
             with open(f'{DIRECTORY}\\{fileName}', 'rb') as file:
                 fileContent = file.read() # lê o arquivo
                 fileContent = pickle.dumps(fileContent)
@@ -99,10 +102,10 @@ def download(conection, fileName):
                 conection.sendall(fileSize) # envia o tamanho do arquivo
                 conection.sendall(fileContent) # envia o arquivo
                 
-                print('Arquivo enviado')
+                print(f'[SUCCESS] Arquivo \'{fileName}\' enviado.')
                 return
 
-    print('Arquivo nao encontrado')
+    print(f'[ERROR] Arquivo \'{fileName}\' não encontrado.')
     conection.sendall((0).to_bytes(INT_SIZE, 'big'))
     
     return

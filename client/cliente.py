@@ -6,9 +6,10 @@ HOST = 'localhost'
 BUFFER_SIZE = 1024
 INT_SIZE = 4
 DIRECTORY = 'files'
+FORMAT = 'utf-8'
 
 def upload(client, filePath: str):
-    client.sendall('upload'.encode('utf-8')) # envia a instrução
+    client.sendall('upload'.encode(FORMAT)) # envia a instrução
     fileName = filePath.split('/')[-1] if filePath.__contains__('/') else filePath
 
     try:
@@ -20,7 +21,7 @@ def upload(client, filePath: str):
             # envia metadados do arquivo no formato (<filename>|<filesize>)
             fileInfo = f'{fileName}|{fileSize}'
             print(fileInfo)
-            client.sendall(fileInfo.encode('utf-8')) 
+            client.sendall(fileInfo.encode(FORMAT)) 
             client.sendall(fileContent) # envia o conteúdo do arquivo
             
             print(f'{fileName} enviado!')
@@ -30,7 +31,7 @@ def upload(client, filePath: str):
         return
 
 def list(client):
-    client.sendall('list'.encode('utf-8')) # envia a instrução
+    client.sendall('list'.encode(FORMAT)) # envia a instrução
     listSize = int.from_bytes(client.recv(INT_SIZE), 'big') # recebe o tamanho da lista
 
     listContent = b''
@@ -46,8 +47,8 @@ def list(client):
     return
 
 def download(client, fileName):
-    client.sendall('download'.encode('utf-8')) # envia a instrução
-    client.sendall(fileName.encode('utf-8')) # envia o nome do arquivo a ser baixado
+    client.sendall('download'.encode(FORMAT)) # envia a instrução
+    client.sendall(fileName.encode(FORMAT)) # envia o nome do arquivo a ser baixado
 
     fileSize = int.from_bytes(client.recv(INT_SIZE), 'big') # recebe o tamanho do arquivo
     
@@ -70,6 +71,7 @@ def download(client, fileName):
     return
 
 def close(client):
+    client.sendall('close'.encode(FORMAT))
     client.close()
     exit()
 
