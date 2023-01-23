@@ -5,7 +5,7 @@ import threading
 
 PORT = 9000
 HOST = 'localhost'
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 1024 * 1024
 INT_SIZE = 4
 DIRECTORY = 'files'
 FORMAT = 'utf-8'
@@ -74,7 +74,7 @@ def upload(conection):
         if len(fileContent) >= fileSize:
             break
 
-    fileContent = pickle.loads(fileContent)
+    # fileContent = pickle.loads(fileContent)
 
     with open(f'{DIRECTORY}\\{fileName}', 'wb') as file: # grava o arquivo no servidor
         file.write(fileContent)

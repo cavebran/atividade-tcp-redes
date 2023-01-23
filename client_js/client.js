@@ -53,21 +53,17 @@ function startClient(host, port) {
 function upload(client, filePath) {
 	try {
 		client.write('upload'); //envia a instrução
+
 		let fileName = filePath.includes('/') ? filePath.split('/').slice(-1)[0] : filePath
 		let fileSize = fs.statSync(filePath).size;
 		console.log(fileSize)
 		let fileInfo = `${fileName}|${fileSize}`
 
 		client.write(fileInfo) // envia metadados do arquivo no formato (<filename>|<filesize>)
+
 		fileContent = fs.readFileSync(filePath)
-
-		let chunks = []
-		client.on('data', (fileContent) => {
-
-		})
-
+		client.write(fileContent)
 		
-			
 		console.log(`${fileName} enviado!`);
 	}
 	catch(err) {
